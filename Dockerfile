@@ -16,4 +16,5 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && gunicorn weather_data.wsgi:application --bind 0.0.0.0:8000"]
+
