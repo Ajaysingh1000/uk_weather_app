@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>UK Climate Data Viewer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        --primary: #1d3557;
+        --accent: #457b9d;
+        --light: #f1faee;
+        --dark: #1d1d1d;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: linear-gradient(to right, #f8f9fa, #e0f2f1);
+        color: var(--dark);
+        padding: 2rem;
+      }
+
+      h1 {
+        text-align: center;
+        color: var(--primary);
+        font-size: 2.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .card {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 2rem;
+        max-width: 800px;
+        margin: 0 auto;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        animation: fadeIn 0.8s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 0.5rem;
+      }
+
+      select,
+      button {
+        width: 100%;
+        max-width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        outline: none;
+      }
+
+      button {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        margin-top: 1rem;
+        transition: background 0.3s ease;
+      }
+
+      button:hover {
+        background-color: var(--accent);
+      }
+
+      .loading {
+        text-align: center;
+        color: var(--accent);
+        font-style: italic;
+        margin-top: 1rem;
+      }
+
+      .error {
+        color: red;
+        text-align: center;
+        margin-top: 1rem;
+      }
+
+      .table-container {
+        margin-top: 2rem;
+        overflow-x: auto;
+        max-height: 500px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        background-color: white;
+      }
+
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 6px 8px;
+        text-align: center;
+      }
+
+      th {
+        background-color: var(--accent);
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+
+      @media (max-width: 600px) {
+        h1 {
+          font-size: 1.8rem;
+        }
+        .card {
+          padding: 1rem;
+        }
+        table {
+          font-size: 0.75rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>UK Climate Data Viewer</h1>
+
+    <div class="card">
+      <div class="form-group">
+        <label for="region">Region</label>
+        <select id="region">
+          <option value="UK">UK</option>
+          <option value="England">England</option>
+          <option value="Wales">Wales</option>
+          <option value="Scotland">Scotland</option>
+          <option value="Northern_Ireland">Northern Ireland</option>
+          <option value="Scotland_W">Scotland W</option>
+          <option value="Scotland_E">Scotland E</option>
+          <option value="Scotland_N">Scotland N</option>
+          <option value="England_E_and_NE">England E & NE</option>
+          <option value="England_SW_and_Wales_S">England SW & Wales S</option>
+          <option value="Midlands">Midlands</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="parameter">Parameter</label>
+        <select id="parameter">
+          <option value="Tmax">Tmax</option>
+          <option value="Tmin">Tmin</option>
+          <option value="Sunshine">Sunshine</option>
+          <option value="Rainfall">Rainfall</option>
+        </select>
+      </div>
+
+      <button onclick="downloadData()">Fetch & View Data</button>
+
+      <div class="loading" id="loading" style="display: none">
+        Loading data...
+      </div>
+      <div class="error" id="error" style="display: none"></div>
+
+      <div class="table-container" id="dataTableContainer"></div>
+    </div>
+
+    <script>
+      function downloadData() {
+        const region = document.getElementById("region").value;
+        const parameter = document.getElementById("parameter").value;
+        const url = `/api/fetch-climate-data/?region=${region}&parameter=${parameter}`;
+
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("error").style.display = "none";
+        document.getElementById("dataTableContainer").innerHTML = "";
+
+        fetch(url)
+          .then((response) => {
+            if (!response.ok) throw new Error("Failed to fetch");
+            return response.json();
+          })
+          .then((responseData) => {
+            document.getElementById("loading").style.display = "none";
+
+            const data = responseData.data;
+            const meta = responseData.metadata;
+
+            if (!Array.isArray(data) || data.length === 0) {
+              throw new Error("No data available");
+            }
+
+            let html = "";
+            if (meta && Array.isArray(meta.description)) {
+              html += `
+                  <div>
+                    <strong>Description:</strong>
+                    ${meta.description.map((line) => `<p>${line}</p>`).join("")}
+                  </div>
+                `;
+            }
+
+            html += `<table><thead><tr>
+              <th>Year</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>May</th><th>Jun</th>
+              <th>Jul</th><th>Aug</th><th>Sep</th><th>Oct</th><th>Nov</th><th>Dec</th>
+              <th>Winter</th><th>Spring</th><th>Summer</th><th>Autumn</th><th>Annual</th>
+            </tr></thead><tbody>`;
+
+            data.forEach((row) => {
+              html += `<tr>
+                <td>${row.year}</td>
+                <td>${row.jan ?? "-"}</td><td>${row.feb ?? "-"}</td><td>${
+                row.mar ?? "-"
+              }</td>
+                <td>${row.apr ?? "-"}</td><td>${row.may ?? "-"}</td><td>${
+                row.jun ?? "-"
+              }</td>
+                <td>${row.jul ?? "-"}</td><td>${row.aug ?? "-"}</td><td>${
+                row.sep ?? "-"
+              }</td>
+                <td>${row.oct ?? "-"}</td><td>${row.nov ?? "-"}</td><td>${
+                row.dec ?? "-"
+              }</td>
+                <td>${row.win ?? "-"}</td><td>${row.spr ?? "-"}</td><td>${
+                row.sum ?? "-"
+              }</td>
+                <td>${row.aut ?? "-"}</td><td>${row.ann ?? "-"}</td>
+              </tr>`;
+            });
+
+            html += "</tbody></table>";
+            document.getElementById("dataTableContainer").innerHTML = html;
+          })
+          .catch((error) => {
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("error").style.display = "block";
+            document.getElementById("error").textContent =
+              "Error loading data: " + error.message;
+          });
+      }
+    </script>
+  </body>
+</html>

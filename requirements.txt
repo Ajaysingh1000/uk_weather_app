@@ -1,0 +1,6 @@
+django==4.2.0  # Or latest stable
+djangorestframework==3.14.0
+requests==2.28.0
+psycopg2-binary
+gunicorn==20.1.0  # For production server (e.g., Heroku/Render)
+django-cors-headers
