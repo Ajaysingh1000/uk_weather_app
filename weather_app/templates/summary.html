@@ -187,7 +187,7 @@
       function downloadData() {
         const region = document.getElementById("region").value;
         const parameter = document.getElementById("parameter").value;
-        const url = `/api/fetch-climate-data/?region=${region}&parameter=${parameter}`;
+        const url = `/fetch-climate-data/?region=${region}&parameter=${parameter}`;
 
         document.getElementById("loading").style.display = "block";
         document.getElementById("error").style.display = "none";
