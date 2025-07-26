@@ -81,7 +81,6 @@ WSGI_APPLICATION = "weather_data.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES = {}
-print(os.getenv("RENDER"))
 if os.getenv("RENDER"):
     DATABASES["default"] = dj_database_url.config(default=os.getenv("DATABASE_URL"))
 else:
